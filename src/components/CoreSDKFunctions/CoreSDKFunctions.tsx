@@ -292,24 +292,6 @@ const CoreSDKFunctions = () => {
 
    const pptxTest = async () => {
     try {
-      // var base64data;
-      // let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
-      // for (let look in looks){
-      //   updateMessages(JSON.stringify(look, null, 2))
-      // }
-      const value: any = await sdk.ok(
-        sdk.run_look({
-          look_id: 4,
-          result_format: 'png',
-          // image_width: 960,
-          // image_height: 540
-        })
-      )
-     // if (value instanceof Blob) {
-     //    const imgLoc = setImageData(URL.createObjectURL(value));
-     //  } else {
-     //    setImageData(btoa(`data:image/png;base64,${value}`));
-     //  }
 
       const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -318,31 +300,69 @@ const CoreSDKFunctions = () => {
         reader.onerror = error => reject(error);
       });
 
+      async function runner() {
+
+      }
+
+
       async function Main() {
-    //     const file = value;
-    //     console.log();
-
-         var base64data = await toBase64(value);
-         base64data = base64data.slice(5);
-         updateMessages(base64data)
-
          //1. Create a new Presentation
-         let pres = new pptxgen();
+       let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
+       console.log(looks)
+       console.log(typeof looks)
+       let pngs = []
+       let i = 0
+       for (let look of looks){
+        console.log(look.id)
+        pngs[i] = await sdk.ok(
+        sdk.run_look({
+            look_id: look.id,
+            result_format: 'png',
+          })
+        )
+        i = i+1;         
+       }
+
+        let pres = new pptxgen();
+        let j=0
+        let base64data = []
+        let slides = []
+        for (let png of pngs){
+          base64data[j] = await toBase64(png);
+          base64data[j] = base64data[j].slice(5);
+    //     updateMessages(base64data)
 
          // 2. Add a Slide
-         let slide = pres.addSlide();
+         slides[j] = pres.addSlide();
 
          // 3. Add one or more objects (Tables, Shapes, Images, Text and Media) to the Slide
-         let textboxText = "Hello World from PptxGenJS!";
-         let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
-         let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
+         // let textboxText = "Hello World from PptxGenJS!";
+         // let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
+         // let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
     //      slide.addText(textboxText, textboxOpts);
-          slide.addImage({ data: base64data,  w:'50%',  h:'50%' });
+
+          slides[j].addImage({ data: base64data[j],  w:'50%',  h:'50%' });
+        }
  
     //      4. Save the Presentation
 
         pres.writeFile("Sample Presentation.pptx");
       }
+
+      runner();
+
+
+
+     // might need this later in case something else is returned by run_look 
+     // if (value instanceof Blob) {
+     //    const imgLoc = setImageData(URL.createObjectURL(value));
+     //  } else {
+     //    setImageData(btoa(`data:image/png;base64,${value}`));
+     //  }
+
+
+
+
 
       Main();
   
