@@ -29,6 +29,7 @@ import { Heading, Box, ButtonOutline, TextArea } from '@looker/components'
 import { SandboxStatus } from '../SandboxStatus'
 import { getCoreSDK2 } from '@looker/extension-sdk-react'
 import { Looker40SDK } from '@looker/sdk'
+import pptxgen from "pptxgenjs"
 
 const CoreSDKFunctions = () => {
   const [imageData, setImageData] = useState<string>()
@@ -62,6 +63,24 @@ const CoreSDKFunctions = () => {
     })
   }
 
+  const getLooks = async () => {
+    try {
+      const value = await sdk.ok(sdk.folder_looks('5', 'id'))
+      updateMessages(JSON.stringify(value, null, 2))
+    } catch (error) {
+      updateMessages('Error getting looks', error)
+    }
+  }
+
+    const getMe = async () => {
+    try {
+      const value = await sdk.ok(sdk.me())
+      updateMessages(JSON.stringify(value, null, 2))
+    } catch (error) {
+      updateMessages('Error getting user', error)
+    }
+  }
+
   const allConnectionsClick = async () => {
     try {
       const value = await sdk.ok(sdk.all_connections())
@@ -75,11 +94,11 @@ const CoreSDKFunctions = () => {
 
   const rawLookImageClick = async () => {
     try {
-      const looks = await sdk.ok(sdk.all_looks('id'))
-      if (looks.length > 0) {
+      const looks = await sdk.ok(sdk.all_looks())
+      if (looks.length > 1) {
         const value: any = await sdk.ok(
           sdk.run_look({
-            look_id: looks[0].id!,
+            look_id: looks[1].id!,
             result_format: 'png',
           })
         )
@@ -132,6 +151,209 @@ const CoreSDKFunctions = () => {
     setImageData(undefined)
   }
 
+  async function getImgFromFile(locURL) {
+    var reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+      reader.onerror = () => {
+        reader.abort();
+        reject(new DOMException("Problem parsing input file."));
+      }    
+      reader.onloadend = function() {
+        resolve(reader.result);
+      }
+      reader.readAsDataURL(locURL); 
+    });
+}
+
+  const pptxTest3 = async () => {
+    try {
+      // let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
+      // for (let look in looks){
+      //   updateMessages(JSON.stringify(look, null, 2))
+      // }
+      const value: any = await sdk.ok(
+        sdk.run_look({
+          look_id: 4,
+          result_format: 'png',
+          // image_width: 960,
+          // image_height: 540
+        })
+      )
+     if (value instanceof Blob) {
+        const imgLoc = setImageData(URL.createObjectURL(value));
+      } else {
+        setImageData(btoa(`data:image/png;base64,${value}`));
+      }
+      
+     // var base64data = getImgFromFile(value);
+
+     base64data = async event => {
+        event.persist();
+
+        if (!event.target || !event.target.files) {
+          return;
+        }
+
+        this.setState({ waitingForFileUpload: true });
+
+        const fileList = event.target.files;
+
+        // Uploads will push to the file input's `.files` array. Get the last uploaded file.
+        const latestUploadedFile = fileList.item(fileList.length - 1);
+
+        try {
+          const fileContents = await App.readUploadedFileAsText(latestUploadedFile);
+          this.setState({
+            uploadedFileContents: fileContents,
+            waitingForFileUpload: false
+          });
+        } catch (e) {
+          console.log(e);
+          this.setState({
+            waitingForFileUpload: false
+          });
+        }
+      };
+
+          // 1. Create a new Presentation
+          let pres = new pptxgen();
+
+          // 2. Add a Slide
+          let slide = pres.addSlide();
+
+          // 3. Add one or more objects (Tables, Shapes, Images, Text and Media) to the Slide
+          let textboxText = "Hello World from PptxGenJS!";
+          let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
+          let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
+    //      slide.addText(textboxText, textboxOpts);
+          slide.addImage({ data: base64data,  w:'50%',  h:'50%' });
+          console.log(base64data);
+          updateMessages(base64data)
+
+          // 4. Save the Presentation
+    //      pres.writeFile("Sample Presentation.pptx");
+        }
+
+     catch (error) {
+          updateMessages('Error printing pptx', error)
+      }
+        reader.readAsDataURL(value); 
+  }
+
+  const pptxTest2 = async () => {
+    try {
+      var base64data;
+      // let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
+      // for (let look in looks){
+      //   updateMessages(JSON.stringify(look, null, 2))
+      // }
+      const value: any = await sdk.ok(
+        sdk.run_look({
+          look_id: 4,
+          result_format: 'png',
+          // image_width: 960,
+          // image_height: 540
+        })
+      )
+     if (value instanceof Blob) {
+        const imgLoc = setImageData(URL.createObjectURL(value));
+      } else {
+        setImageData(btoa(`data:image/png;base64,${value}`));
+      }
+        var reader = new FileReader();
+        reader.onloadend = function() {
+          var base64data = reader.result.slice(5);
+
+          // 1. Create a new Presentation
+          let pres = new pptxgen();
+
+          // 2. Add a Slide
+          let slide = pres.addSlide();
+
+          // 3. Add one or more objects (Tables, Shapes, Images, Text and Media) to the Slide
+          let textboxText = "Hello World from PptxGenJS!";
+          let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
+          let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
+    //      slide.addText(textboxText, textboxOpts);
+          slide.addImage({ data: base64data,  w:'50%',  h:'50%' });
+          console.log(base64data);
+          updateMessages(base64data)
+
+          // 4. Save the Presentation
+    //      pres.writeFile("Sample Presentation.pptx");
+        }
+
+    } catch (error) {
+          updateMessages('Error printing pptx', error)
+      }
+        reader.readAsDataURL(value); 
+  }
+
+   const pptxTest = async () => {
+    try {
+      // var base64data;
+      // let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
+      // for (let look in looks){
+      //   updateMessages(JSON.stringify(look, null, 2))
+      // }
+      const value: any = await sdk.ok(
+        sdk.run_look({
+          look_id: 4,
+          result_format: 'png',
+          // image_width: 960,
+          // image_height: 540
+        })
+      )
+     // if (value instanceof Blob) {
+     //    const imgLoc = setImageData(URL.createObjectURL(value));
+     //  } else {
+     //    setImageData(btoa(`data:image/png;base64,${value}`));
+     //  }
+
+      const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+
+      async function Main() {
+    //     const file = value;
+    //     console.log();
+
+         var base64data = await toBase64(value);
+         base64data = base64data.slice(5);
+         updateMessages(base64data)
+
+         //1. Create a new Presentation
+         let pres = new pptxgen();
+
+         // 2. Add a Slide
+         let slide = pres.addSlide();
+
+         // 3. Add one or more objects (Tables, Shapes, Images, Text and Media) to the Slide
+         let textboxText = "Hello World from PptxGenJS!";
+         let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
+         let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
+    //      slide.addText(textboxText, textboxOpts);
+          slide.addImage({ data: base64data,  w:'50%',  h:'50%' });
+ 
+    //      4. Save the Presentation
+
+        pres.writeFile("Sample Presentation.pptx");
+      }
+
+      Main();
+  
+       //       reader.readAsDataURL(blb);
+
+
+    } catch (error) {
+          updateMessages('Error printing pptx', error)
+      }
+  }
+
   return (
     <>
       <Heading mt="xlarge">Core SDK Functions</Heading>
@@ -150,10 +372,19 @@ const CoreSDKFunctions = () => {
           <ButtonOutline mt="small" onClick={rawLookImageClick}>
             Render Look image
           </ButtonOutline>
-          {imageData && <img src={imageData} />}
           <ButtonOutline mt="small" onClick={clearMessagesClick}>
-            Clear messages
+            Clear
           </ButtonOutline>
+          <ButtonOutline mt="small" onClick={getMe}>
+            Get Me
+          </ButtonOutline>
+          <ButtonOutline mt="small" onClick={getLooks}>
+            Get Looks
+          </ButtonOutline>
+          <ButtonOutline mt="small" onClick={pptxTest}>
+            PPTX Gen
+          </ButtonOutline>
+          {imageData && <img src={imageData} />}
         </Box>
         <Box width="50%" p="small" maxWidth="40vw">
           <TextArea height="60vh" readOnly value={messages} />
