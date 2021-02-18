@@ -300,13 +300,8 @@ const CoreSDKFunctions = () => {
         reader.onerror = error => reject(error);
       });
 
-      async function runner() {
-
-      }
-
-
       async function Main() {
-         //1. Create a new Presentation
+       updateMessages('Getting Look IDs from Folder 5')
        let looks = await sdk.ok(sdk.folder_looks('5', 'id'))
        console.log(looks)
        console.log(typeof looks)
@@ -314,6 +309,7 @@ const CoreSDKFunctions = () => {
        let i = 0
        for (let look of looks){
         console.log(look.id)
+        updateMessages(`Running Look ${look.id}`)
         pngs[i] = await sdk.ok(
         sdk.run_look({
             look_id: look.id,
@@ -323,35 +319,31 @@ const CoreSDKFunctions = () => {
         i = i+1;         
        }
 
+        //1. Create a new Presentation
         let pres = new pptxgen();
         let j=0
         let base64data = []
         let slides = []
+        updateMessages('printing to slides')
         for (let png of pngs){
           base64data[j] = await toBase64(png);
           base64data[j] = base64data[j].slice(5);
-    //     updateMessages(base64data)
+          // 2. Add a Slide
+          slides[j] = pres.addSlide();
+          slides[j].addImage({ data: base64data[j],  w:'50%',  h:'50%' });
 
-         // 2. Add a Slide
-         slides[j] = pres.addSlide();
-
-         // 3. Add one or more objects (Tables, Shapes, Images, Text and Media) to the Slide
          // let textboxText = "Hello World from PptxGenJS!";
          // let textboxOpts = { x: 1, y: 1, color: '363636', fill: { color:'F1F1F1' }, align: pres.AlignH.center };
          // let imgOpts = { x: 1, y: 1, align: pres.AlignH.center };
-    //      slide.addText(textboxText, textboxOpts);
+         //  slide.addText(textboxText, textboxOpts);
 
-          slides[j].addImage({ data: base64data[j],  w:'50%',  h:'50%' });
         }
- 
-    //      4. Save the Presentation
-
+        
+         // 4. Save the Presentation
         pres.writeFile("Sample Presentation.pptx");
       }
 
-      runner();
-
-
+      Main();
 
      // might need this later in case something else is returned by run_look 
      // if (value instanceof Blob) {
@@ -360,16 +352,8 @@ const CoreSDKFunctions = () => {
      //    setImageData(btoa(`data:image/png;base64,${value}`));
      //  }
 
-
-
-
-
-      Main();
   
-       //       reader.readAsDataURL(blb);
-
-
-    } catch (error) {
+      } catch (error) {
           updateMessages('Error printing pptx', error)
       }
   }
